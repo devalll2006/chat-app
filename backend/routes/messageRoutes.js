@@ -2,6 +2,7 @@ import express from "express";
 import { body, param } from "express-validator";
 import { sendMessage, getMessages } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { getConversations } from "../controllers/messageController.js";
 
 const router = express.Router();
 
@@ -31,6 +32,9 @@ router.post(
   sendMessage
 );
 
+router.get("/conversations", protect, getConversations);
+
+
 // GET MESSAGES
 router.get(
   "/:userId",
@@ -42,5 +46,7 @@ router.get(
   ],
   getMessages
 );
+
+
 
 export default router;

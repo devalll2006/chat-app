@@ -1,6 +1,7 @@
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import { validationResult } from "express-validator";
+import mongoose from "mongoose";
 
 // SEND MESSAGE
 export const sendMessage = async (req, res) => {
@@ -54,7 +55,6 @@ export const sendMessage = async (req, res) => {
       success: true,
       data: message,
     });
-
   } catch (error) {
     console.error("Send Message Error:", error);
     return res.status(500).json({
@@ -63,7 +63,6 @@ export const sendMessage = async (req, res) => {
     });
   }
 };
-
 
 // GET MESSAGES
 export const getMessages = async (req, res) => {
@@ -91,9 +90,82 @@ export const getMessages = async (req, res) => {
       success: true,
       data: messages,
     });
-
   } catch (error) {
     console.error("Get Messages Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// GET CONVERSATIONS
+export const getConversations = async (req, res) => {
+  try {
+    console.log("Logged in user:", req.user._id);
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [{ sender: userId }, { receiver: userId }],
+        },
+      },
+      {
+        $addFields: {
+          otherUser: {
+            $cond: [
+              { $eq: [{ $toString: "$sender" }, userId.toString()] },
+              "$receiver",
+              "$sender",
+            ],
+          },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $group: {
+          _id: "$otherUser",
+          lastMessage: { $first: "$content" },
+          lastMessageTime: { $first: "$createdAt" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users", // MongoDB collection name
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $project: {
+          _id: 0,
+          user: {
+            _id: "$user._id",
+            name: "$user.name",
+            email: "$user.email",
+          },
+          lastMessage: 1,
+          lastMessageTime: 1,
+        },
+      },
+      {
+        $sort: { lastMessageTime: -1 },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: conversations,
+    });
+  } catch (error) {
+    console.error("Get Conversations Error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
