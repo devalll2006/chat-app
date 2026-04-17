@@ -37,7 +37,7 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 Index for fast chat queries
+//  Index for fast chat queries
 messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 
 const Message = mongoose.model("Message", messageSchema);

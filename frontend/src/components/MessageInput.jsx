@@ -10,7 +10,7 @@ export default function MessageInput({ user, selectedChat }) {
     const msg = {
       sender: { _id: user._id },
       content: message,
-      chat: selectedChat, // 🔥 important
+      chat: selectedChat, //  important
     };
 
     console.log("Sending:", msg);

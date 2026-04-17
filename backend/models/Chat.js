@@ -35,7 +35,7 @@ const chatSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 Index for fast lookup
+//  Index for fast lookup
 chatSchema.index({ users: 1 });
 
 const Chat = mongoose.model("Chat", chatSchema);

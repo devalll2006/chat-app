@@ -1,28 +1,34 @@
 import { useState } from "react";
 import API from "../api";
 
-export default function Login({ setUser }) {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const login = async () => {
+  const register = async () => {
     try {
-      const { data } = await API.post("/api/auth/login", {
+      await API.post("/api/auth/register", {
+        name,
         email,
         password,
       });
 
-      localStorage.setItem("user", JSON.stringify(data));
-      setUser(data);
+      alert("Registered successfully. Now login.");
     } catch (error) {
-      console.log(error.response?.data || error.message);
-      alert(error.response?.data?.message || "Login failed");
+      alert(error.response?.data?.message || "Registration failed");
     }
   };
 
   return (
     <div className="bg-white p-8 rounded shadow w-80">
-      <h2 className="text-xl mb-4">Login</h2>
+      <h2 className="text-xl mb-4">Register</h2>
+
+      <input
+        className="w-full p-2 border mb-2"
+        placeholder="Name"
+        onChange={(e) => setName(e.target.value)}
+      />
 
       <input
         className="w-full p-2 border mb-2"
@@ -38,10 +44,10 @@ export default function Login({ setUser }) {
       />
 
       <button
-        className="bg-blue-500 text-white w-full p-2"
-        onClick={login}
+        className="bg-green-500 text-white w-full p-2"
+        onClick={register}
       >
-        Login
+        Register
       </button>
     </div>
   );
