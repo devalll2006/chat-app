@@ -6,8 +6,8 @@ import mongoose from "mongoose";
 // SEND MESSAGE
 export const sendMessage = async (req, res) => {
   try {
-    // check validation errors
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
@@ -17,15 +17,13 @@ export const sendMessage = async (req, res) => {
 
     const { content, receiverId, image } = req.body;
 
-    // prevent empty message
-    if (!content && !image) {
+    if (!content?.trim() && !image) {
       return res.status(400).json({
         success: false,
         message: "Message cannot be empty",
       });
     }
 
-    // prevent self messaging
     if (receiverId === req.user._id.toString()) {
       return res.status(400).json({
         success: false,
@@ -33,8 +31,8 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // check receiver exists
     const receiverExists = await User.exists({ _id: receiverId });
+
     if (!receiverExists) {
       return res.status(404).json({
         success: false,
@@ -42,11 +40,10 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // create message
     const message = await Message.create({
       sender: req.user._id,
       receiver: receiverId,
-      content,
+      content: content?.trim() || "",
       image: image || "",
       status: "sent",
     });
@@ -56,10 +53,9 @@ export const sendMessage = async (req, res) => {
       data: message,
     });
   } catch (error) {
-    console.error("Send Message Error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: error.message || "Internal server error",
     });
   }
 };
@@ -68,6 +64,7 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
       return res.status(400).json({
         success: false,
@@ -91,10 +88,9 @@ export const getMessages = async (req, res) => {
       data: messages,
     });
   } catch (error) {
-    console.error("Get Messages Error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: error.message || "Internal server error",
     });
   }
 };
@@ -102,7 +98,6 @@ export const getMessages = async (req, res) => {
 // GET CONVERSATIONS
 export const getConversations = async (req, res) => {
   try {
-    console.log("Logged in user:", req.user._id);
     const userId = new mongoose.Types.ObjectId(req.user._id);
 
     const conversations = await Message.aggregate([
@@ -114,11 +109,7 @@ export const getConversations = async (req, res) => {
       {
         $addFields: {
           otherUser: {
-            $cond: [
-              { $eq: [{ $toString: "$sender" }, userId.toString()] },
-              "$receiver",
-              "$sender",
-            ],
+            $cond: [{ $eq: ["$sender", userId] }, "$receiver", "$sender"],
           },
         },
       },
@@ -134,7 +125,7 @@ export const getConversations = async (req, res) => {
       },
       {
         $lookup: {
-          from: "users", // MongoDB collection name
+          from: "users",
           localField: "_id",
           foreignField: "_id",
           as: "user",
@@ -165,10 +156,9 @@ export const getConversations = async (req, res) => {
       data: conversations,
     });
   } catch (error) {
-    console.error("Get Conversations Error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: error.message || "Internal server error",
     });
   }
 };

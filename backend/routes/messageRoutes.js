@@ -1,8 +1,11 @@
 import express from "express";
 import { body, param } from "express-validator";
-import { sendMessage, getMessages } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { getConversations } from "../controllers/messageController.js";
+import {
+  sendMessage,
+  getMessages,
+  getConversations,
+} from "../controllers/messageController.js";
 
 const router = express.Router();
 
@@ -24,29 +27,19 @@ router.post(
       .isLength({ max: 2000 })
       .withMessage("Message too long"),
 
-    body("image")
-      .optional()
-      .isURL()
-      .withMessage("Image must be a valid URL"),
+    body("image").optional().isURL().withMessage("Image must be a valid URL"),
   ],
-  sendMessage
+  sendMessage,
 );
 
 router.get("/conversations", protect, getConversations);
-
 
 // GET MESSAGES
 router.get(
   "/:userId",
   protect,
-  [
-    param("userId")
-      .isMongoId()
-      .withMessage("Invalid user ID"),
-  ],
-  getMessages
+  [param("userId").isMongoId().withMessage("Invalid user ID")],
+  getMessages,
 );
-
-
 
 export default router;
